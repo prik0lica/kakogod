@@ -1,14 +1,13 @@
-#include <linux/kernel.h>
-#include <linux/string.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/types.h>
 #include <linux/cdev.h>
-#include <linux/kdev.h>
 #include <linux/uaccess.h>
-#include <linux/eerno.h>
-#include <linux/device.h>
+#include <linux/semaphore.h>
+#include <linux/string.h>
+
+
 
 #define BUFF_SIZE 16
 
@@ -26,7 +25,7 @@ int endRead = 0;
 
 int FIFO_open(struct inode *pinode, struct file *pfile);
 int FIFO_close(struct inode *pinode, struct file *pfile);
-ssize_t FIFO_read(struct file *pfile, char __user *buffer, size_t length, loff_t *offset);
+ssize_t FIFO_read(struct file *pfile, const char __user *buffer, size_t length, loff_t *offset);
 ssize_t FIFO_write();
 
 struct file_operations my_fops = 
@@ -81,7 +80,7 @@ ssize_t FIFO_read(struct file *pfile, char __user *buffer, size_t length, loff_t
 	
 }
 
-ssize_t FIFO_write(struct file *pfile, char __user *buffer, size_t length, loff_t *offset)
+ssize_t FIFO_write(struct file *pfile, const char __user *buffer, size_t length, loff_t *offset)
 {
 	int ret;
 	char buff[BUFF_SIZE];
