@@ -74,7 +74,7 @@ ssize_t FIFO_read(struct file *pfile, char __user *buffer, size_t length, loff_t
 		
 		len = scnprintf(local_buff, strlen(local_buff), "%d", fifo[read_pos]); //put data into local buffer for user space to read
 		
-		ret = copy_to_user(buffer, local_buff, len); 					  //copy into data buffer from local to se if OK
+		ret = copy_to_user(buffer, local_buff, len); 			       //copy into data buffer from local to se if OK
 		if(ret)
 			return -EFAULT;
 		
@@ -112,7 +112,7 @@ ssize_t FIFO_write(struct file *pfile, const char __user *buffer, size_t length,
 	if(ret)
 		return -EFAULT;
 	
-	buff[length-1] = '\0';
+	local_buff[length-1] = '\0';
 	
 	
 	if(num_of_el_current < 16)
@@ -125,7 +125,7 @@ ssize_t FIFO_write(struct file *pfile, const char __user *buffer, size_t length,
 		{
 			//wrote into actual buffer
 			fifo[write_pos] = value;
-			printk(KERN_INFO "WROTE %ld - succes\n", value);
+			printk(KERN_INFO "WROTE %d - succes\n", value);
 			num_of_el_current++;
 			
 		}
