@@ -14,7 +14,7 @@
 MODULE_LICENSE("Dual BSD/GPL");
 
 dev_t my_dev_id;
-static struct class *my_classl;
+static struct class *my_class;
 static struct device *my_device;
 static struct cdev *my_cdev;
 
