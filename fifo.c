@@ -108,7 +108,7 @@ ssize_t FIFO_write(struct file *pfile, const char __user *buffer, size_t length,
 	char local_buff[BUFF_SIZE];	//temp location for read data in char type
 	int value;					//temp location for read data in int type
 	
-	ret = copy_from_user(buff, buffer, length);
+	ret = copy_from_user(local_buff, buffer, length);
 	if(ret)
 		return -EFAULT;
 	
