@@ -25,8 +25,8 @@ int endRead = 0;
 
 int FIFO_open(struct inode *pinode, struct file *pfile);
 int FIFO_close(struct inode *pinode, struct file *pfile);
-ssize_t FIFO_read(struct file *pfile, const char __user *buffer, size_t length, loff_t *offset);
-ssize_t FIFO_write();
+ssize_t FIFO_read(struct file *pfile, char __user *buffer, size_t length, loff_t *offset);
+ssize_t FIFO_write(struct file *pfile, const char __user *buffer, size_t length, loff_t *offset);
 
 struct file_operations my_fops = 
 {
@@ -44,7 +44,7 @@ int FIFO_open(struct inode *pinode, struct file *pfile)
 }
 
 
-int FIFO_open(struct inode *pinode, struct file *pfile)
+int FIFO_close(struct inode *pinode, struct file *pfile)
 {
 	printk(KERN_INFO "Succes CLOSE brape\n");
 	return 0;
@@ -94,10 +94,10 @@ ssize_t FIFO_write(struct file *pfile, const char __user *buffer, size_t length,
 	
 	if(pos < 16)
 	{
-		ret = sscanf(buff, %d, &value);
+		ret = sscanf(buff, %ld, &value);
 		if(ret == 1)
 		{
-			printk(KERN_INFO "Great success WROTE %d", value);
+			printk(KERN_INFO "Great success WROTE %ld", value);
 			fifo[pos] = value;
 			pos++;
 		}
