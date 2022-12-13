@@ -140,7 +140,7 @@ static int __init FIFO_init(void)
    }
    printk(KERN_INFO "class created\n");
    
-   my_device = device_create(my_class, NULL, my_dev_id, NULL, "lifo");
+   my_device = device_create(my_class, NULL, my_dev_id, NULL, "fifo");
    if (my_device == NULL){
       printk(KERN_ERR "failed to create device\n");
       goto fail_1;
