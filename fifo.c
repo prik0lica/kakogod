@@ -4,12 +4,12 @@
 #include <linux/types.h>
 #include <linux/cdev.h>
 #include <linux/uaccess.h>
-#include <linux/semaphore.h>
 #include <linux/string.h>
 
 
 
 #define BUFF_SIZE 16
+#define MAX_STRING_SIZE 64
 
 MODULE_LICENSE("Dual BSD/GPL");
 
@@ -20,8 +20,12 @@ static struct cdev *my_cdev;
 
 
 int fifo[16];
-int pos = 0;
-int endRead = 0;
+
+static int read_pos = 0;
+static int write_pos = 0;
+static int num_of_el_current = 0;
+
+static int endRead = 0;
 
 int FIFO_open(struct inode *pinode, struct file *pfile);
 int FIFO_close(struct inode *pinode, struct file *pfile);
@@ -39,14 +43,14 @@ struct file_operations my_fops =
 
 int FIFO_open(struct inode *pinode, struct file *pfile)
 {
-	printk(KERN_INFO "Succes OPEN brape\n");
+	printk(KERN_INFO "OPEN - succes\n");
 	return 0;
 }
 
 
 int FIFO_close(struct inode *pinode, struct file *pfile)
 {
-	printk(KERN_INFO "Succes CLOSE brape\n");
+	printk(KERN_INFO "CLOSE - succes\n");
 	return 0;
 }
 
@@ -54,37 +58,55 @@ int FIFO_close(struct inode *pinode, struct file *pfile)
 ssize_t FIFO_read(struct file *pfile, char __user *buffer, size_t length, loff_t *offset)
 {
 	int ret;
-	char buff[BUFF_SIZE];
+	char local_buff[MAX_STRING_SIZE] = {0};
 	long int len = 0;
 	
+	//read check
 	if(endRead)
 	{
 		endRead = 0;
 		return 0;
 	}
 	
-	if(pos > 0)
+	//read one value
+	if(num_of_el_current > 0) /* check if fifo is empty */
 	{
-		pos--;
-		len = scnprintf(buff, BUFF_SIZE, "%d", fifo[pos]);
 		
-		ret = copy_to_user(buffer, buff, len);
+		len = scnprintf(local_buff, strlen(local_buff), "%d", fifo[read_pos]); //put data into local buffer for user space to read
+		
+		ret = copy_to_user(buffer, local_buff, len); 					  //copy into data buffer from local to se if OK
 		if(ret)
 			return -EFAULT;
 		
-		printk(KERN_INFO "Great success READ\n");
+		printk(KERN_INFO "READ %d - SUCCESS.\n", fifo[read_pos]);
+		if (read_pos == (BUFF_SIZE-1))
+			{
+				read_pos = 0;
+			}
+		else
+			{
+				read_pos++;
+			}
+			
 		endRead = 1;
+		num_of_el_current--;
+		
+		return len;
+		
 	}	
-	
-	return len;
+	else
+	{
+		printk(KERN_WARNING "FIFO - empty\n");
+		return 0;
+	}
 	
 }
 
 ssize_t FIFO_write(struct file *pfile, const char __user *buffer, size_t length, loff_t *offset)
 {
-	int ret;
-	char buff[BUFF_SIZE];
-	long value;
+	int ret;					//for error use
+	char local_buff[BUFF_SIZE];	//temp location for read data in char type
+	int value;					//temp location for read data in int type
 	
 	ret = copy_from_user(buff, buffer, length);
 	if(ret)
@@ -92,27 +114,41 @@ ssize_t FIFO_write(struct file *pfile, const char __user *buffer, size_t length,
 	
 	buff[length-1] = '\0';
 	
-	if(pos < 16)
+	
+	if(num_of_el_current < 16)
 	{
-		ret = sscanf(buff, %ld, &value);
+		//read number parsed from local_buff into value
+		//char -> int
+		ret = sscanf(local_buff, "%d", &value); 
+		
 		if(ret == 1)
 		{
-			printk(KERN_INFO "Great success WROTE %ld", value);
-			fifo[pos] = value;
-			pos++;
+			//wrote into actual buffer
+			fifo[write_pos] = value;
+			printk(KERN_INFO "WROTE %ld - succes\n", value);
+			num_of_el_current++;
+			
 		}
 		else
 		{
-			printk(KERN_WARNING "wrong wrong wrong\n");
+			printk(KERN_WARNING "ERROR in WRITE\n");
+		}
+		
+		if(write_pos == (BUFF_SIZE-1))
+		{
+			write_pos = 0;
+		}
+		else
+		{
+			write_pos++;
 		}
 		
 		
 	}
 	else
 	{
-		printk(KERN_WARNING "FIFO full full full\n");
+		printk(KERN_WARNING "FIFO is full\n");
 	}
-	
 
 	return length;
 }
@@ -159,7 +195,7 @@ static int __init FIFO_init(void)
 	}
    printk(KERN_INFO "cdev added\n");
    
-   printk(KERN_INFO "Hello b b b b\n");
+   printk(KERN_INFO "Hello this is FIFO\n");
 
    return 0;
 
@@ -180,7 +216,7 @@ static void __exit FIFO_exit(void)
 	device_destroy(my_class, my_dev_id);
 	class_destroy(my_class);
 	unregister_chrdev_region(my_dev_id,1);
-	printk(KERN_INFO "byebye\n");
+	printk(KERN_INFO "There is no more FIFO\n");
 }
 
 module_init(FIFO_init);
